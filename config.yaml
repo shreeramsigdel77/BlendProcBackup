@@ -1,0 +1,322 @@
+# Args: <obj_file><obj_name(eg. crescent.*)> <output_dir><number_of_samples>
+{
+  "version": 3,
+  "setup": {
+    "blender_install_path": "/home/pasonatech/Blender2Detectron/blender-2.83.0-linux64/",
+    "pip": [
+      "h5py"
+    ]
+  },
+  "modules": [
+    
+   
+    {
+      "module": "main.Initializer",
+      "config":{
+        "global": {
+          # "output_is_temp": False, #By deafult True, which will not store training images
+          # "output_dir": "examples/crescent_test2/output_testrandCrescent23",
+            "output_dir": "<args:2>"
+          
+        }
+      }
+    },
+    {
+      "module": "loader.BlendLoader",
+      "config": {
+        "path": "<args:0>",
+        # "path": "examples/crescent_test2/crescent2_rot.blend",
+        "load_from": "/Object",  # load all objects from the scene file
+        "add_properties": {
+          "cp_physics": True,
+          
+        }
+      }
+    },
+    {
+      "module": "manipulators.EntityManipulator",
+      "config": {
+        "selector": {
+          "provider": "getter.Entity",
+          "conditions": {
+            "name": '<args:1>',
+            "type": "MESH",
+          }
+        },
+        "location": {          #sets only one time at the begning
+          "provider": "sampler.Uniform3d",
+          "max":[0, 0,0],
+          "min":[0, 0,0]
+        },
+       
+        "cp_physics": True,
+        "cp_category_id": 1 #class name 
+      }
+    },
+
+    
+    {
+      "module": "manipulators.WorldManipulator",
+      "config": {
+        "cf_set_world_category_id": 0,  # this sets the worlds background category id to 0
+        "cf_bg_surface_color": [0,0,0,0], #sets background color *actually world light color RGBA, ignoes if "transparent_background": True (setting in render)
+        "cf_bg_surface_strength": 0.1,
+        
+      }
+    },
+
+    
+    
+    #for crescent rotation only
+    # {
+    #   "module": "object.ObjectPoseSampler",
+    #   "config":{
+    #     "max_iterations": 1000,
+
+    #     "number_of_samples":<args:3>,
+    #     "objects_to_sample": {
+    #       "provider": "getter.Entity",
+    #       "condition": {
+    #         "cp_sample_pose": True,
+    #         "type": "MESH",
+    #         "name": "crescent.003"
+    #       }
+    #     },
+    #     "pos_sampler":{
+    #       "provider": "sampler.Uniform3d",
+    #       "max": [0,0,1.6489],             #same as trigger volume of unreal engine 
+    #       "min": [00,0,1.6489]
+    #     },
+    #     "rot_sampler": {
+    #       "provider": "sampler.Uniform3d",
+    #       "max": [0,0,0],
+    #       "min": [0,0,0]
+    #     },
+        
+    #   }
+    # },
+
+    # {
+    #   "module": "object.ObjectPoseSampler",
+    #   "config":{
+    #     "max_iterations": 1000,
+    #     "objects_to_sample": {
+    #       "provider": "getter.Entity",
+    #       "condition": {
+    #         "cp_sample_pose": True,
+    #         "type": "MESH",
+    #         "name": "Cube"
+    #       }
+    #     },
+    #     "pos_sampler":{
+    #       "provider": "sampler.Uniform3d",
+    #       "max": [0,0,-1],             #same as trigger volume of unreal engine 
+    #       "min": [00,0,-20]
+    #     },
+    #     "rot_sampler": {
+    #       "provider": "sampler.Uniform3d",
+    #       "max": [0,0,0],
+    #       "min": [0,0,0]
+    #     },
+        
+    #   }
+    # },
+
+
+
+
+    ################################################################################
+    ################################################################################
+    #########################Camera Setting Starts###############################
+    ################################################################################
+    ################################################################################
+    #camera setup 1 looks from direct above. focus on one object
+    # {
+    #   "module": "camera.CameraSampler",
+    #   "config": {
+    #     "cam_poses": [
+    #       {
+    #         "number_of_samples": 3, #number of different view = total number of image
+    #         # "resolution_x": 1024, #bydeafult 512 Image resolution
+    #         # "resolution_y": 1024,
+    #         "location": {
+    #           "provider":"sampler.Uniform3d",
+    #           "max":[0, 0, 150],
+    #           "min":[0, 10, 50]
+    #           # "max":[80, 80, 150],  #gives x,y value provides different rotational effect where as z value provides the scaling effect, you may need to adjsut the lighting in the set as well
+    #           # "min":[-80, -80, 40] # you can add the light setup inside blend file as well
+    #         },
+    #         "rotation": {
+    #           #Makes model always at center 
+    #           "format": "look_at",
+    #           "value": {
+    #             "provider": "getter.POI",   #POI point of interest
+    #               "selector": {
+    #                           "provider": "getter.Entity",
+    #                           "conditions": {
+    #                             "type": "MESH",
+    #                             "name": "crescent.*", #adjust the mesh to focus on one entity 
+    #                           },
+                              
+    #                         }
+    #           },
+              
+    #           #"rotation/inplane_rot", "A rotation angle in radians around the Z axis. Type: float. Default: 0.0"  360 = 6.28319 180 = 3.14159
+    #           "inplane_rot": {
+    #             "provider": "sampler.Value",
+    #             "type": "float",
+    #             "min": -3.14159,
+    #             "max": 3.14159
+    #           }
+    #         }
+            
+    #       }
+    #     ]
+    #   }
+    # },
+
+
+    #camerasetting 2, generates diferent elevation from a center, custom change is done in implemented in Shell.py
+    # {
+    #   "module": "camera.CameraSampler",
+    #   "config": {
+    #     "cam_poses": [
+    #     {
+    #       "proximity_checks": {
+    #         "min": 0.3
+    #       },
+    #       "excluded_objs_in_proximity_check":  {
+    #         "provider": "getter.Entity",
+    #         "conditions": {
+    #           "name": "crescent.*",
+              
+    #           "type": "MESH"
+    #         }
+    #       },
+    #       "number_of_samples": 100,
+    #     # "resolution_x": 1024, #bydeafult 512 Image resolution
+    #     # "resolution_y": 1024,
+    #       "location": {
+    #         "provider": "sampler.Shell",
+    #         "center": [0, 0, 100],  #camera scale is forcefully implemented in Shell.py by taking center[2] value max = assigned, min = max/3
+    #         "radius_min": 0,
+    #         "radius_max": 50,
+    #         "elevation_min": 5,
+    #         "elevation_max": 89,
+    #         "uniform_elevation": False
+    #       },
+    #       "rotation": {
+    #         "format": "look_at",
+    #         "value": {
+    #           "provider": "getter.POI",
+    #           "selector": {
+    #             "provider": "getter.Entity",
+    #             "conditions": {
+    #               "type": "MESH",
+    #               "name": "crescent.*", #you can use a distractor object at center and manipulate your instance as well or manipulate mesh through pose 
+    #               # "name": "Origin_ref",
+    #             },
+    #             "random_samples": 45 #different camera pose 
+    #           }
+    #         },
+    #         "inplane_rot": {
+    #           "provider": "sampler.Value",
+    #           "type": "float",
+    #           "min": -3.14159,
+    #           "max": 3.14159
+    #         }
+    #       }
+    #     }
+    #     ]
+    #   }
+    # },
+
+    ####simple camera setting
+    {
+      "module": "camera.CameraSampler",
+      "config": {
+        "cam_poses": [
+          {
+            
+            "number_of_samples":<args:3>,
+            "resolution_x": 1333, #bydeafult 512 Image resolution
+            "resolution_y": 800,
+            "location": {
+              "provider":"sampler.Uniform3d",
+              "max":[70, 70, 350],
+              "min":[-70, -70, 25]
+            },
+            "rotation": {
+              "format": "look_at",
+              "value": {
+                "provider": "getter.POI"
+              },          
+              "inplane_rot": {
+                "provider": "sampler.Value",
+                "type": "float",
+                "min": -3.14159,
+                "max": 3.14159,
+              }
+            }
+          }
+        ]
+      }
+    },
+    
+
+    
+
+    ################################################################################
+    ################################################################################
+    #########################Camera Setting Ends###############################
+    ################################################################################
+    ################################################################################
+
+  
+
+
+    ################################################################################
+    ################################################################################
+    #########################Section Start: Data creation###########################
+    ################################################################################
+    ################################################################################
+
+
+    {
+      "module": "renderer.RgbRenderer",
+      "config": {
+        "output_key": "colors",
+        "samples": 350,
+        "transparent_background": True, #for transparent background  deafult: False
+        "blurry_edges": False,
+        # "render_normals": True,
+        # "normals_output_key": "normals",
+        # "render_distance": True,
+        # "distance_output_key": "distance"
+      }
+    },
+    {
+      "module": "renderer.SegMapRenderer",
+      "config": {
+        "map_by": ["instance", "class"],
+        "deafult_values":{"class":0} 
+      }
+    },
+    {
+      "module": "writer.CocoAnnotationsWriter",
+      "config": {
+        "mask_encoding_format": "polygon", #by default "rel"-> iscrowd value is 1; which rejects while using in detectron
+        
+        # "supercategory": "crs" # by default "supercategory": "coco_annotations" not functioning properly
+        "append_to_existing_output": True # you can append new data to existing one.
+      }
+    }
+    ################################################################################
+    ################################################################################
+    #########################Section Ends: Data creation###########################
+    ################################################################################
+    ################################################################################
+
+
+  ]
+}

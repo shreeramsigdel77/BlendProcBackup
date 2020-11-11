@@ -1,0 +1,180 @@
+# Args: <obj_file><obj_name(eg. crescent.002)> <output_dir><number_of_samples>
+{
+  "version": 3,
+  "setup": {
+    "blender_install_path": "/home/pasonatech/Blender2Detectron/blender-2.83.0-linux64/",
+    "pip": [
+      "h5py"
+    ]
+  },
+  "modules": [
+    
+   
+    {
+      "module": "main.Initializer",
+      "config":{
+        "global": {
+          # "output_is_temp": False, #By deafult True, which will not store training images
+          # "output_dir": "examples/crescent_test2/output_testrandCrescent23",
+            "output_dir": "<args:2>"
+          
+        }
+      }
+    },
+    {
+      "module": "loader.BlendLoader",
+      "config": {
+        "path": "<args:0>",
+        # "path": "examples/crescent_test2/crescent2_rot.blend",
+        "load_from": "/Object",  # load all objects from the scene file
+        "add_properties": {
+          "cp_physics": True,
+          
+        }
+      }
+    },
+    {
+      "module": "manipulators.EntityManipulator",
+      "config": {
+        "selector": {
+          "provider": "getter.Entity",
+          "conditions": {
+            "name": '<args:1>',
+            "type": "MESH",
+          }
+        },
+                
+        "cp_physics": True,
+        "cp_category_id": 1 #class name 
+      }
+    },
+
+    
+    {
+      "module": "manipulators.WorldManipulator",
+      "config": {
+        "cf_set_world_category_id": 0,  # this sets the worlds background category id to 0
+        "cf_bg_surface_color": [0,0,0,0], #sets background color *actually world light color RGBA, ignoes if "transparent_background": True (setting in render)
+        "cf_bg_surface_strength": 0.1,
+        
+      }
+    },
+
+    
+    
+    # manipulation inside a trigger box
+    {
+      "module": "object.ObjectPoseSampler",
+      "config":{
+        "max_iterations": 1000, #bottleneck checks for collisions
+
+        "number_of_samples":<args:3>,
+        "objects_to_sample": {
+          "provider": "getter.Entity",
+          "condition": {
+            "cp_sample_pose": True,
+            "type": "MESH",
+            "name": "<args:2>"      #mesh name
+          }
+        },
+        "pos_sampler":{
+          "provider": "sampler.Uniform3d",
+          "max":[50, 35,0],   #tigger volume
+          "min":[-60, -35,-50]
+        },
+        "rot_sampler": {
+          "provider": "sampler.Uniform3d",      # z =ywal , x= pitch , y = roll
+          "max": [0.5,0.5,6.28],
+          "min": [-0.5,-0.5,0]    #6.28 = 360, 3.14159 = 180 
+        },
+        
+      }
+    },
+
+    
+
+
+
+    ################################################################################
+    ################################################################################
+    #########################Camera Setting Starts###############################
+    ################################################################################
+    ################################################################################
+    
+    {
+      "module": "camera.CameraSampler",
+      "config": {
+        "cam_poses": [
+          {
+            
+            "number_of_samples":<args:3>,
+            "resolution_x": 1333, #bydeafult 512 Image resolution
+            "resolution_y": 800,
+            "location": {
+              "provider":"sampler.Uniform3d",
+              "max":[0, 0, 200],
+              "min":[0, 0, 250]
+            },
+           
+          }
+        ]
+      }
+    },
+    
+
+    
+
+    ################################################################################
+    ################################################################################
+    #########################Camera Setting Ends###############################
+    ################################################################################
+    ################################################################################
+
+  
+
+
+    ################################################################################
+    ################################################################################
+    #########################Section Start: Data creation###########################
+    ################################################################################
+    ################################################################################
+
+
+    {
+      "module": "renderer.RgbRenderer",
+      "config": {
+        "output_key": "colors",
+        "samples": 350,
+        "transparent_background": True, #for transparent background  deafult: False
+        "blurry_edges": False,
+        # "render_normals": True,
+        # "normals_output_key": "normals",
+        # "render_distance": True,
+        # "distance_output_key": "distance"
+      }
+    },
+    {
+      "module": "renderer.SegMapRenderer",
+      "config": {
+        "map_by": ["instance", "class"],
+        "deafult_values":{"class":0} 
+      }
+    },
+    {
+      "module": "writer.CocoAnnotationsWriter",
+      "config": {
+        "mask_encoding_format": "polygon", #by default "rel"-> iscrowd value is 1; which rejects while using in detectron
+        
+        # "supercategory": "crs" # by default "supercategory": "coco_annotations" not functioning properly
+        "append_to_existing_output": True # you can append new data to existing one.
+      }
+    }
+    ################################################################################
+    ################################################################################
+    #########################Section Ends: Data creation###########################
+    ################################################################################
+    ################################################################################
+
+
+  ]
+}
